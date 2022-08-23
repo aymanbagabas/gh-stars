@@ -16,7 +16,8 @@ $ gh extension install aymanbagabas/gh-stars
 ## Usage
 
 ```bash
-$ gh stars [GitHub repository]
+$ gh stars                     # while in a git repository
+$ gh stars [GitHub repository] # to view a specific repository
 ```
 
 ### Keybindings
