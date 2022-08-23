@@ -1,6 +1,8 @@
 # gh-stars 🌟
 
-A GitHub CLI extension to show the number of stars for a repository.
+A GitHub CLI extension to show repository stargazers.
+
+![Screen shot](./screenshot.png)
 
 ## Installation
 
@@ -14,5 +16,12 @@ $ gh extension install aymanbagabas/gh-stars
 ## Usage
 
 ```bash
-$ gh stars
+$ gh stars [GitHub repository]
 ```
+
+### Keybindings
+
+* <kbd>tab</kbd> - Switch to table view.
+* <kbd>?</kbd> - Show help.
+* <kbd>q</kbd> - Quit.
+* <kbd>↑↓</kbd> - Navigate table view.
