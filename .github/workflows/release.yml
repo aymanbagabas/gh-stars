@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 permissions:
   contents: write
 
@@ -13,4 +14,4 @@ jobs:
       - uses: actions/checkout@v2
       - uses: cli/gh-extension-precompile@v1
         with:
-          go_version: "1.17"
+          go_version: "^1"
