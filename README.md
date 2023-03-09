@@ -16,13 +16,16 @@ $ gh extension install aymanbagabas/gh-stars
 ## Usage
 
 ```bash
-$ gh stars                     # while in a git repository
-$ gh stars [GitHub repository] # to view a specific repository
+$ gh stars                     # while in a GitHub repository
+$ gh stars [GitHub repository] # to view a specific GitHub repository
 ```
 
 ### Keybindings
 
-* <kbd>tab</kbd> - Switch to table view.
-* <kbd>?</kbd> - Show help.
-* <kbd>q</kbd> - Quit.
-* <kbd>↑↓</kbd> - Navigate table view.
+- <kbd>tab</kbd> - Switch between graph &table view.
+- <kbd>a</kbd> - toggle all stargazers.
+- <kbd>left</kbd> - increase time.
+- <kbd>right</kbd> - decrease time.
+- <kbd>?</kbd> - Show help.
+- <kbd>q</kbd> - Quit.
+- <kbd>↑↓</kbd> - Navigate table view.
