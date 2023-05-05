@@ -9,7 +9,7 @@ require (
 	github.com/cli/go-gh v1.2.1
 	github.com/guptarohit/asciigraph v0.5.5
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.2.0
 )
 
 require (
