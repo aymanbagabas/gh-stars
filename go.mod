@@ -7,6 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.24.1
 	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/cli/go-gh v1.2.1
+	github.com/dustin/go-humanize v1.0.1
 	github.com/guptarohit/asciigraph v0.5.5
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/sync v0.2.0

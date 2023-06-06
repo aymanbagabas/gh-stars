@@ -16,6 +16,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
+	"github.com/dustin/go-humanize"
 	"github.com/guptarohit/asciigraph"
 	"github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
@@ -29,6 +30,10 @@ const (
 	perPage        = 100
 	reposPath      = "repos/%s"
 	stargazersPath = "repos/%s/stargazers"
+)
+
+const (
+	defaultTimeFormat = "2006-01-02"
 )
 
 type view int
@@ -54,6 +59,26 @@ type Stargazer struct {
 
 type StargazersMsg map[string]int
 
+func newStargazersMap(s []Stargazer) StargazersMsg {
+	result := make(map[string]int)
+	for _, v := range s {
+		t := v.StarredAt.Format(defaultTimeFormat)
+		result[t]++
+	}
+	return result
+}
+
+func (s StargazersMsg) after(t time.Time) map[string]int {
+	result := make(map[string]int)
+	for k, v := range s {
+		kt, _ := time.Parse(defaultTimeFormat, k)
+		if t.Before(kt) {
+			result[k] = v
+		}
+	}
+	return result
+}
+
 type RepoMsg struct {
 	StargazersCount int `json:"stargazers_count"`
 }
@@ -73,6 +98,8 @@ type Repo struct {
 	help       help.Model
 	showHelp   bool
 	mu         sync.Mutex
+	last       int
+	all        bool
 }
 
 func NewRepo(name string) (*Repo, error) {
@@ -103,6 +130,7 @@ func NewRepo(name string) (*Repo, error) {
 		spinner: s,
 		table:   t,
 		help:    h,
+		last:    30, // default to 30 days
 	}, nil
 }
 
@@ -145,12 +173,24 @@ func (r *Repo) GetStargazers() ([]Stargazer, error) {
 func (r *Repo) ShortHelp() []key.Binding {
 	return []key.Binding{
 		key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "toggle all"),
+		),
+		key.NewBinding(
+			key.WithKeys("h", "left"),
+			key.WithHelp("left", "before"),
+		),
+		key.NewBinding(
+			key.WithKeys("l", "right"),
+			key.WithHelp("right", "after"),
+		),
+		key.NewBinding(
 			key.WithKeys("tab", "shift+tab"),
 			key.WithHelp("tab", "section"),
 		),
 		key.NewBinding(
 			key.WithKeys("?"),
-			key.WithHelp("?", "help"),
+			key.WithHelp("?", "toggle help"),
 		),
 		key.NewBinding(
 			key.WithKeys("q", "ctrl+c"),
@@ -199,6 +239,14 @@ func (r *Repo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		r.table.SetHeight(r.height - 1)
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "a":
+			r.all = !r.all
+		case "h", "left":
+			r.last += 30
+		case "l", "right":
+			if r.last > 30 {
+				r.last -= 30
+			}
 		case "q", "ctrl+c":
 			return r, tea.Quit
 		case "tab", "shift+tab":
@@ -228,12 +276,7 @@ func (r *Repo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				return ErrorMsg(err)
 			}
-			stars := make(map[string]int)
-			for _, s := range stargazers {
-				t := s.StarredAt.Format("2006-01-02")
-				stars[t]++
-			}
-			return StargazersMsg(stars)
+			return newStargazersMap(stargazers)
 		})
 	}
 	return r, tea.Batch(cmds...)
@@ -256,7 +299,11 @@ func (r *Repo) View() string {
 		)
 	}
 	keys := make([]string, 0)
-	for k := range r.stargazers {
+	stargazers := r.stargazers
+	if r.last > 0 && !r.all {
+		stargazers = StargazersMsg(r.stargazers).after(time.Now().AddDate(0, 0, -r.last))
+	}
+	for k := range stargazers {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -268,18 +315,22 @@ func (r *Repo) View() string {
 		offset := 3
 		plot := make([]float64, len(keys))
 		for i, k := range keys {
-			o := fmt.Sprintf("%d", r.stargazers[k])
+			o := fmt.Sprintf("%d", stargazers[k])
 			if len(o) > offset {
 				offset = len(o)
 			}
-			plot[i] = float64(r.stargazers[k])
+			plot[i] = float64(stargazers[k])
+		}
+		caption := fmt.Sprintf("%s %d stargazers (%s)", r.name, r.stars, humanize.Time(time.Now().AddDate(0, 0, -r.last)))
+		if r.all {
+			caption = fmt.Sprintf("%s %d stargazers (since %s)", r.name, r.stars, keys[0])
 		}
 		graph := asciigraph.Plot(
 			plot,
 			asciigraph.SeriesColors(asciigraph.Blue),
 			asciigraph.Width(r.width-offset-1),
 			asciigraph.Height(r.height-2),
-			asciigraph.Caption(fmt.Sprintf("%s %d stargazers over time", r.name, r.stars)),
+			asciigraph.Caption(caption),
 			asciigraph.Precision(0),
 			asciigraph.Offset(offset),
 		)
